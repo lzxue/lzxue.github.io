@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Mapbox GL JS debug page</title>
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.43.0/mapbox-gl.css' rel='stylesheet' />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body,
+    #map {
+      height: 100%;
+      background: #111;
+    }
+    #time {
+      position: absolute;
+      height: 40px;
+      width: 200px;
+      color: white;
+      top: 50px;
+      right: 150px;
+      z-index: 2;
+      font-size: 40px;
+    }
+    /* .mapbox-canvas-layer {
+      z-index: -1000;
+    } */
+  </style>
+</head>
+
+
+<body>
+
+  <div id='map'>
+    <div id ='time'></div>
+  </div>
+  <script src='../mapbox-gl.js'></script>
+  <!-- <script src='http://p0gwwfid3.bkt.clouddn.com/gago-mapbox-gl/0.0.35/mapbox-gl-dev.js'></script> -->
+  <script src="../windLayer.js"></script>
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+    var map = new mapboxgl.Map({
+      container: 'map',
+      zoom: 10,
+      center: [116.4, 39.9],
+      style: "http://p0gwwfid3.bkt.clouddn.com/gago-mapbox-gl/style/style.json",
+      style:{
+        version: 8,
+        name: 'GAGO',
+        sprite: 'http://cdn.gagogroup.cn/sprite/', // 使用本地化sprite
+        glyphs: 'http://cdn.gagogroup.cn/gagogl/glyphs/{fontstack}/{range}.pbf',
+        sources: {},
+        layers:[],
+      },
+      renderWorldCopies: true,
+      dragRotate:false,
+      hash: true
+    });
+    var times = ["2018011700", "2018011706", "2018011712", "2018011718", "2018011800", "2018011806", "2018011812", "2018011818", "2018011900", "2018011906", "2018011912", "2018011918", "2018012000", "2018012006", "2018012012", "2018012018", "2018012100", "2018012106", "2018012112", "2018012118", "2018012200", "2018012206", "2018012212", "2018012218", "2018012300", "2018012306", "2018012312", "2018012318"];
+    map.on('load', function () {
+      map.showTileBoundaries = true;
+      map.addLayer({
+        'id': 'maine',
+        'type': 'fill',
+        'source': {
+          "type": "vector",
+          "tiles": ["http://data.gl.gagogroup.cn/services/postgis/province/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=province,name_chn"],
+          "tileSize": 512,
+          "roundZoom": true, // 注意在 geojson 掩膜 lerc 时，此选项请设为true
+        },
+        'source-layer':'province_geom',
+        'layout': {},
+        'paint': {
+          'fill-opacity':0,
+          // 'line-width': 1,
+        }
+      });
+      map.addLayer({
+        'id': 'maineline',
+        'type': 'line',
+        'source':'maine',
+        'source-layer':'province_geom',
+        'layout': {},
+        'paint': {
+          'line-color': "#fff",
+          'line-width': 1,
+        }
+      });
+      // map.addLayer({
+      //   'id': 'mainesymbol',
+      //   'type': 'symbol',
+      //   'source':'maine',
+      //   'source-layer':'province_geom',
+      //   layout: {
+      //   'text-field': `{name_chn}`,//字段名称
+      //   'text-font': ['Arial Unicode MS Regular'],
+      //   'text-size': 11,
+      //   'text-transform': 'uppercase',
+      //   'text-letter-spacing': 0.05,
+      //   'text-offset': [0, 1.5]
+      // },
+      // paint: {
+      //   'text-color': '#202',
+      //   'text-halo-color': '#fff',
+      //   'text-halo-width': 2
+      // }
+      // });
+      var layer = new windLayer(map, {
+        maskUrl:'./china.json',
+        windDataInfo:{
+          "width": 246,
+          "height": 198,
+          "uMin": -25,
+          "uMax": 25,
+          "vMin": -25,
+          "vMax": 25,
+        },
+        windDataUrl:'./day',
+        windDataTime:'2018011700',
+        isMask:true,
+        extent:[73.66, 3.86, 135.05, 53.55]
+      });
+      var index =0;
+      map.addSource('lerctiledem', {
+        "type": "lerc_v2",
+        // "tiles": ['https://qiepian.gagogroup.cn/beiJing_haidian/dem/{z}/{x}/{y}.lerc'],
+        "tiles":['http://101.201.77.235:8080/'],
+        "lercVersion": 1,
+        "maxzoom": 13,
+        "tileSize": 512,
+        }).addLayer({
+        'id': 'lerctiledem',
+        'type': 'lerc-terrain',
+        'source': 'lerctiledem',
+        paint: {
+            "raster-opacity": 1,
+            "draw-type":'normal',
+            "raster-domain-max": 9000,
+            "raster-domain-min": 0,
+            // "lerc-include": [[0,1000]],
+            "raster-colorscale": 'yignbu',
+            "geojson-mask-source": "maine",
+
+        }
+    },'maine');
+      setInterval(function(){
+        index++;
+        if(index==28) index =0;
+        var time = times[index].substr(8,10);
+        document.getElementById('time').innerText=times[index].substr(6,2)+'日'+(time*1 +8)%24 +'时';
+        layer.updateWind(times[index]);
+
+      },2000)
+
+    })
+
+  </script>
+
+</body>
+
+</html>
