@@ -45,18 +45,38 @@
   <script src="./windLayer.js"></script>
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
-    var map = new mapboxgl.Map({
+      var map = new mapboxgl.Map({
       container: 'map',
-      zoom: 3,
-      center: [105.4, 36.78],
+      zoom: 10,
+      center: [116.4, 39.9],
       style: "http://p0gwwfid3.bkt.clouddn.com/gago-mapbox-gl/style/style.json",
       style:{
         version: 8,
         name: 'GAGO',
         sprite: 'http://cdn.gagogroup.cn/sprite/', // 使用本地化sprite
         glyphs: 'http://cdn.gagogroup.cn/gagogl/glyphs/{fontstack}/{range}.pbf',
-        sources: {},
-        layers:[],
+        sources: {
+          "mapbox": {
+          "type": "raster",
+          "url": "mapbox://mapbox.satellite",
+          "tileSize": 256
+           }
+        },
+        layers:[
+          {
+          "id": "background",
+          "type": "background",
+          "paint": {
+            "background-color": "rgb(4,7,14)"
+          }
+        },
+        {
+          "id": "satellite",
+          "type": "raster",
+          "source": "mapbox",
+          "source-layer": "mapbox_satellite_full"
+        }
+        ],
       },
       renderWorldCopies: true,
       dragRotate:false,
